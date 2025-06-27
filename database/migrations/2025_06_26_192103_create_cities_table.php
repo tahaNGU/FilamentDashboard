@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('cities', function (Blueprint $table) {
             $table->id();
-            $table->string("name");
+            $table->string("name")->index();
             $table->string("slug")->nullable();
             $table->string("tel_prefix",7)->nullable();
             $table->string("lang",5)->default("en")->index();
