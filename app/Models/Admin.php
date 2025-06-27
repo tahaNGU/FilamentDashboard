@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enum\Gender;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -25,6 +26,10 @@ class Admin extends Authenticatable
         'email',
         'super_admin',
         'pic',
+        'province_id',
+        'city_id',
+        'gender',
+        'birth_date'
     ];
     /**
      * The attributes that should be hidden for serialization.
@@ -46,6 +51,15 @@ class Admin extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'gender'=>Gender::class
         ];
+    }
+
+    public function province(){
+        return $this->belongsTo(Province::class);
+    }
+
+    public function city(){
+        return $this->belongsTo(City::class);
     }
 }

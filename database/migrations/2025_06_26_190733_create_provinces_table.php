@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('provinces', function (Blueprint $table) {
             $table->id();
-            $table->string("name")->unique();
+            $table->string("name")->unique()->index();
             $table->string("slug")->nullable();
             $table->string("lang",5)->default("en")->index();
             $table->string("tel_prefix",5)->nullable();

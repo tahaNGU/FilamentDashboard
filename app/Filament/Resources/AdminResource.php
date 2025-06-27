@@ -2,21 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use App\Enum\Gender;
 use App\Filament\Resources\AdminResource\Pages;
-use App\Filament\Resources\AdminResource\RelationManagers;
 use App\Models\Admin;
+use App\Models\City;
 use App\Rules\PersianMobileNumber;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Password;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\DateTimePicker;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Validation\Rule;
 
 class AdminResource extends Resource
 {
@@ -58,6 +62,7 @@ class AdminResource extends Resource
                     ->required()
                     ->rules([new PersianMobileNumber()]),
                 TextInput::make('email')
+                    ->unique(ignoreRecord: true)
                     ->required()
                     ->email()
                     ->maxLength(255),
@@ -67,9 +72,46 @@ class AdminResource extends Resource
                 Toggle::make('super_admin')
                     ->label("Super Admin")
                     ->inline(false),
-                FileUpload::make('attachment')
-                    ->directory('form-attachments')
-                    ->visibility('private')
+                FileUpload::make('pic')
+                    ->columnSpan('full')
+                    ->directory('avatar')
+                    ->image(),
+                Select::make("gender")
+                    ->enum(Gender::class)
+                    ->options(Gender::class),
+                Select::make('province_id')
+                    ->label('Province')
+                    ->relationship('province', 'name')
+                    ->live()
+                    ->required()
+                    ->searchable()
+                    ->afterStateUpdated(function (callable $set) {
+                        return $set('city_id', null);
+                    }),
+
+                Select::make('city_id')
+                    ->label('City')
+                    ->relationship('city', 'name')
+                    ->required()
+                    ->live()
+                    ->searchable()
+                    ->rules(fn(callable $get) => [
+                        Rule::exists('cities', 'id')
+                            ->where('province_id', $get('province_id')),
+                    ])
+                    ->options(function (callable $get) {
+                        $provinceId = $get('province_id');
+                        if (!$provinceId) {
+                            return [];
+                        }
+                        return City::query()->where('province_id', $provinceId)->pluck('name', 'id');
+                    })
+                    ->reactive()
+                    ->disabled(fn(callable $get) => !$get('province_id'))
+                    ->editOptionForm(City::getForm())
+                    ->createOptionForm(City::getForm()),
+
+
             ]);
     }
 
@@ -77,11 +119,17 @@ class AdminResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
+                Tables\Columns\TextInputColumn::make("name")->rules(["required"])->sortable()->searchable(),
+                TextColumn::make("lastname"),
+                ImageColumn::make('pic')->defaultImageUrl(function ($record){
+                    return sprintf("https://ui-avatars.com/api/?email=%s",$record["email"]);
+                }),
+                TextColumn::make("mobile"),
+                TextColumn::make("email"),
+                TextColumn::make("province.name"),
+                TextColumn::make("city.name"),
+                TextColumn::make("birth_date")->jalaliDate('Y-m-d'),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
