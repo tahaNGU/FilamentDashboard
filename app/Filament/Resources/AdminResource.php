@@ -5,13 +5,18 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AdminResource\Pages;
 use App\Filament\Resources\AdminResource\RelationManagers;
 use App\Models\Admin;
-use Filament\Forms;
+use App\Rules\PersianMobileNumber;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Password;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\DateTimePicker;
 
 class AdminResource extends Resource
 {
@@ -23,7 +28,48 @@ class AdminResource extends Resource
     {
         return $form
             ->schema([
+                TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('lastname')
+                    ->label("Last Name")
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('username')
+                    ->label("UserName")
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('password')
+                    ->password()
+                    ->revealable()
+                    ->label('Password')
+                    ->required()
+                    ->rules([
+                        'string',
+                        'min:8',
+                        'regex:/[@$!%*?&#]/',
+                    ])
+                    ->validationMessages([
+                        'regex' => 'The password must contain at least one special character (@, $, !, %, *, ?, &, #).',
+                    ]),
+                TextInput::make('mobile')
+                    ->label("Mobile")
+                    ->maxLength(20)
+                    ->required()
+                    ->rules([new PersianMobileNumber()]),
+                TextInput::make('email')
+                    ->required()
+                    ->email()
+                    ->maxLength(255),
 
+                DatePicker::make('birth_date')->required()
+                    ->jalali(),
+                Toggle::make('super_admin')
+                    ->label("Super Admin")
+                    ->inline(false),
+                FileUpload::make('attachment')
+                    ->directory('form-attachments')
+                    ->visibility('private')
             ]);
     }
 

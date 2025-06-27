@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        #        Todo:: Add Province And City
+        #Todo:: Add Province And City
         Schema::create('admins', function (Blueprint $table) {
             $table->id();
             $table->string('name');
